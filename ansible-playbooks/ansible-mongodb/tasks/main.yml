@@ -22,24 +22,3 @@
   service:
     name: mongodb
     state: started
-# - command: apt-key adv --keyserver keyserver.ubuntu.com --recv 7F0CEB10
-#
-# - name: add mongodb repo
-  # apt_repository:
-    # repo: "deb http://downloads-distro.mongodb.org/repo/ubuntu-upstart dist 10gen"
-    # state: present
-#
-# - name: install mongodb
-  # apt:
-    # name: mongodb-server
-    # update_cache: yes
-    # pkg: "mongodb-10gen={{ mongo_version }}"
-    # state: present
-#
-# - name: ensure mongodb is running
-  # service:
-    # name: mongo
-    # name: mongodb
-    # state: started
-
-
