@@ -1,17 +1,45 @@
 ---
-- command: apt-key adv --keyserver keyserver.ubuntu.com --recv 7F0CEB10
+# The Mongodb Playbook
+- name: MongoDB | Import Public keys
+  apt_key:
+    keyserver: hkp://keyserver.ubuntu.com:80
+    id: 0C49F3730359A14518585931BC711F9BA15703C6
 
-- name: add mongodb repo
+- name: MongoDB | Add Repository
   apt_repository:
-    repo: "deb http://downloads-distro.mongodb.org/repo/ubuntu-upstart dist 10gen"
+    filename: '/etc/apt/sources.list.d/mongodb-org'
+    repo: "deb http://repo.mongodb.org/apt/ubuntu trusty/mongodb-org/3.2 multiverse" 
     state: present
+    update_cache: yes
 
-- name: install mongodb
-  apt:
-    pkg: "mongodb-10gen={{ mongo_version }}"
+- name: MongoDB | Install MongoDB
+  apt: 
+    name: mongodb-server
     state: present
+    update_cache: yes
 
-- name: ensure mongodb is running
+- name: MongoDB | Running State
   service:
     name: mongodb
     state: started
+# - command: apt-key adv --keyserver keyserver.ubuntu.com --recv 7F0CEB10
+#
+# - name: add mongodb repo
+  # apt_repository:
+    # repo: "deb http://downloads-distro.mongodb.org/repo/ubuntu-upstart dist 10gen"
+    # state: present
+#
+# - name: install mongodb
+  # apt:
+    # name: mongodb-server
+    # update_cache: yes
+    # pkg: "mongodb-10gen={{ mongo_version }}"
+    # state: present
+#
+# - name: ensure mongodb is running
+  # service:
+    # name: mongo
+    # name: mongodb
+    # state: started
+
+

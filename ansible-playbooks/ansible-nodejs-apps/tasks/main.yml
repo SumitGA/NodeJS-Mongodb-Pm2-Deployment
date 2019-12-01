@@ -1,35 +1,51 @@
-- name: Install forever package globally
-  npm: name=forever global=yes state=present
+- name: Set some variable
+  set_fact:
+    release_path: "{{ project_path }}/releases/{{ lookup('pipe', 'date +%Y%m%d%H%M%S') }}"
+    current_path: " {{ project_path }}/current"
 
-- name: Install npm global packages
-  npm: name={{item}} global=yes state=present
-  with_items: npm.global_packages
-  when: npm.global_packages
+- name: Retrieve current release folder
+  command: readlink -f current
+  register: current_release_path
+  ignore_errors: yes
+  args:
+    chdir: "{{ project_path }}"
 
-- name: Check list of Node.js apps running
-  command: forever list
-  register: forever_list
-  changed_when: False
+- name: Create new Folder
+  file:
+    dest={{ release_path }}
+    mode=0755
+    recurse=yes
+    state=directory
 
-- stat: path=/vagrant/package.json
-  register: vagpack
+- name: Clone the repository
+  become: no
+  git: >
+    repo=git@github.com:SumitGA/CodeDash.git   
+    key_file=~/.ssh/id_rsa
+    version=master
+    dest={{ release_path }}
 
-- name: Run npm install in /vagrant folder
-  npm: path=/vagrant
-  when: vagpack.stat.exists
+- name: Update npm 
+  npm:
+    # executable: /usr/bin/npm
+    path={{ release_path }}
 
-- name: Start app in /vagrant/ folder
-  command: forever start -c "npm start" /vagrant/
-  when: "forever_list.stdout.find('/vagrant/') == -1"
-  when: vagpack.stat.exists
+- name: Update symlink
+  file:
+    src={{ release_path }}
+    dest={{ current_path }}
+    state=link
 
-- name: Run npm install in folders listed in apps.enabled
-  npm: path={{ item }}
-  with_items: apps.enabled
-  when: apps is defined and apps.enabled is defined
+- name: Delete old pm2 process
+  command: pm2 delete ws-node
+  ignore_errors: yes
 
-- name: Start all enabled applications
-  command: forever start -c "npm start" {{ item }}
-  when: "forever_list.stdout.find('{{ item }}') == -1"
-  with_items: apps.enabled
-  when: apps is defined and apps.enabled is defined
+- name: Start pm2
+  command: pm2 start {{ current_path }}/index.js --name node-app
+
+- name: Delete old dir
+  become: yes
+  shell: rm -rf {{ current_release_path.stdout }}/
+  when: current_release_path.stdout != current_path
+
+
